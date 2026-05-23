@@ -83,8 +83,8 @@ function setupEventListeners() {
                 headerDesc.textContent = "Interact exclusively with Alibaba Qwen 2.5 72B Instruct, testing open-source reasoning capabilities.";
                 document.getElementById("chat-input").placeholder = "Ask Qwen anything...";
             } else {
-                headerTitle.textContent = "🆚 Side-by-Side Assistant Arena";
-                headerDesc.textContent = "Watch Google Gemini 2.5 Flash and HuggingFace Qwen 2.5 72B handle your queries concurrently in a live side-by-side speed and quality duel.";
+                headerTitle.textContent = "AI chatbot";
+                headerDesc.textContent = "";
                 document.getElementById("chat-input").placeholder = "Enter a prompt to chat with both models in parallel...";
             }
         });
@@ -356,13 +356,13 @@ function clearArena() {
     
     restoreWelcome(
         "gemini-messages",
-        "Hi! I am your <strong>Frontier Assistant</strong>, powered by Gemini 2.5 Flash. I offer lightning-fast, high-precision answers with robust contextual awareness. Ask me anything or trigger a prompt from the sidebar!",
+        "Hi! I am your <strong>Frontier Assistant</strong>.",
         "avatar-violet",
         "fa-bolt"
     );
     restoreWelcome(
         "qwen-messages",
-        "Hello! I am your <strong>Open Source Assistant</strong>, powered by Qwen 2.5 72B hosted on HuggingFace. I feature advanced reasoning, complex problem solving, and long-term vector database memory. Test my parameters!",
+        "Hello! I am your <strong>Open Source Assistant</strong>.",
         "avatar-emerald",
         "fa-leaf"
     );
