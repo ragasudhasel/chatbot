@@ -14,6 +14,29 @@ import os, json, re, sys
 import gradio as gr
 from huggingface_hub import InferenceClient
 
+# ── Monkey-Patch to resolve Gradio client schema parsing crash ──────────────────
+try:
+    import gradio_client.utils as client_utils
+    _orig_json_schema_to_python_type = getattr(client_utils, "_json_schema_to_python_type", None)
+    if _orig_json_schema_to_python_type:
+        def patched_json_schema_to_python_type(schema, defs=None):
+            if isinstance(schema, bool):
+                return "Any"
+            return _orig_json_schema_to_python_type(schema, defs)
+        client_utils._json_schema_to_python_type = patched_json_schema_to_python_type
+
+    _orig_get_type = getattr(client_utils, "get_type", None)
+    if _orig_get_type:
+        def patched_get_type(schema):
+            if isinstance(schema, bool):
+                return "boolean"
+            return _orig_get_type(schema)
+        client_utils.get_type = patched_get_type
+except Exception:
+    pass
+# ─────────────────────────────────────────────────────────────────────────────
+
+
 # Add current directory to path for smooth modular imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:

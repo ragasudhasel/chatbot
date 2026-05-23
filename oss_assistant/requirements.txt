@@ -3,3 +3,5 @@ huggingface_hub>=0.24.0
 chromadb>=0.5.0
 duckduckgo-search>=6.1.7
 anthropic>=0.30.0
+pydantic==2.10.6
+
