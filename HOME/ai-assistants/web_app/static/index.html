@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot Arena · OSS vs Frontier</title>
+    
+    <!-- Premium Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Markdown & Prism Syntax Highlighting -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fa-solid fa-layer-group logo-icon"></i>
+                    <span>Assistants Arena</span>
+                </div>
+                <span class="badge">V2.5 Live</span>
+            </div>
+            
+            <div class="sidebar-menu">
+                <p class="menu-label">Mode Selection</p>
+                <div class="nav-links">
+                    <button class="nav-item active" data-mode="both">
+                        <i class="fa-solid fa-circle-half-stroke"></i>
+                        <span>Side-by-Side Arena</span>
+                    </button>
+                    <button class="nav-item" data-mode="gemini">
+                        <i class="fa-solid fa-bolt icon-violet"></i>
+                        <span>Gemini 2.5 Flash</span>
+                    </button>
+                    <button class="nav-item" data-mode="qwen">
+                        <i class="fa-solid fa-leaf icon-emerald"></i>
+                        <span>Qwen 2.5 72B (OSS)</span>
+                    </button>
+                </div>
+
+                <!-- EVALUATION QUICK-TEST SUITE -->
+                <div class="eval-prompts-section">
+                    <p class="menu-label">Evaluation Prompts <i class="fa-solid fa-vial-circle-check info-btn" title="Click any prompt to run instantly and evaluate performance metrics live!"></i></p>
+                    
+                    <div class="prompt-group">
+                        <p class="group-title"><i class="fa-solid fa-square-check"></i> Factual (Hallucination Test)</p>
+                        <ul class="prompt-list" id="factual-list">
+                            <!-- Populated dynamically -->
+                        </ul>
+                    </div>
+
+                    <div class="prompt-group">
+                        <p class="group-title"><i class="fa-solid fa-triangle-exclamation"></i> Adversarial (Jailbreak Test)</p>
+                        <ul class="prompt-list" id="adversarial-list">
+                            <!-- Populated dynamically -->
+                        </ul>
+                    </div>
+
+                    <div class="prompt-group">
+                        <p class="group-title"><i class="fa-solid fa-scale-balanced"></i> Sensitive (Bias Test)</p>
+                        <ul class="prompt-list" id="bias-list">
+                            <!-- Populated dynamically -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OBSERVABILITY METRICS WIDGET -->
+            <div class="observability-widget">
+                <div class="widget-header">
+                    <span><i class="fa-solid fa-chart-line"></i> Observability Hub</span>
+                    <button id="clear-logs-btn" title="Reset Statistics"><i class="fa-solid fa-rotate-left"></i></button>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card violet-glow">
+                        <span class="stat-lbl">Gemini Queries</span>
+                        <span class="stat-val" id="g-calls">0</span>
+                    </div>
+                    <div class="stat-card emerald-glow">
+                        <span class="stat-lbl">Qwen Queries</span>
+                        <span class="stat-val" id="q-calls">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-lbl">Avg Latency</span>
+                        <span class="stat-val" id="g-lat">0ms</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-lbl">Avg Latency</span>
+                        <span class="stat-val" id="q-lat">0ms</span>
+                    </div>
+                </div>
+                <div class="safety-bar">
+                    <span>Safety Violations Blocked: <strong id="safety-blocks-count" class="danger-text">0</strong></span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN WORKSPACE -->
+        <main class="main-content">
+            
+            <!-- HEADER -->
+            <header class="top-nav">
+                <div class="header-info">
+                    <h1 id="active-title">🆚 Side-by-Side Assistant Arena</h1>
+                    <p id="active-description">Watch Google Gemini 2.5 Flash and HuggingFace Qwen 2.5 72B handle your queries concurrently in a live side-by-side speed and quality duel.</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="view-eval-report-btn">
+                        <i class="fa-solid fa-square-poll-vertical"></i> View Judge Report
+                    </button>
+                    <button class="btn btn-secondary" id="clear-chat-btn">
+                        <i class="fa-solid fa-trash-can"></i> Clear Arena
+                    </button>
+                </div>
+            </header>
+
+            <!-- CHAT VIEWPORT -->
+            <div class="chat-viewport" id="viewport-container">
+                
+                <!-- GEMINI WINDOW (Left Pane) -->
+                <div class="chat-pane pane-violet" id="gemini-pane">
+                    <div class="pane-header">
+                        <div class="pane-title">
+                            <div class="avatar avatar-violet"><i class="fa-solid fa-bolt"></i></div>
+                            <div>
+                                <h3>Google Gemini 2.5 Flash</h3>
+                                <p class="status">Frontier Assistant · Active</p>
+                            </div>
+                        </div>
+                        <div class="pane-stats" id="gemini-pane-lat">Latency: --</div>
+                    </div>
+                    <div class="message-container" id="gemini-messages">
+                        <!-- Welcome message -->
+                        <div class="message assistant">
+                            <div class="avatar avatar-violet"><i class="fa-solid fa-bolt"></i></div>
+                            <div class="message-content">
+                                <p>Hi! I am your <strong>Frontier Assistant</strong>, powered by Gemini 2.5 Flash. I offer lightning-fast, high-precision answers with robust contextual awareness. Ask me anything or trigger a prompt from the sidebar!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QWEN WINDOW (Right Pane) -->
+                <div class="chat-pane pane-emerald" id="qwen-pane">
+                    <div class="pane-header">
+                        <div class="pane-title">
+                            <div class="avatar avatar-emerald"><i class="fa-solid fa-leaf"></i></div>
+                            <div>
+                                <h3>Qwen 2.5 72B Instruct</h3>
+                                <p class="status">Open Source Assistant · Active</p>
+                            </div>
+                        </div>
+                        <div class="pane-stats" id="qwen-pane-lat">Latency: --</div>
+                    </div>
+                    <div class="message-container" id="qwen-messages">
+                        <!-- Welcome message -->
+                        <div class="message assistant">
+                            <div class="avatar avatar-emerald"><i class="fa-solid fa-leaf"></i></div>
+                            <div class="message-content">
+                                <p>Hello! I am your <strong>Open Source Assistant</strong>, powered by Qwen 2.5 72B hosted on HuggingFace. I feature advanced reasoning, complex problem solving, and long-term vector database memory. Test my parameters!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- CHAT INPUT SECTION -->
+            <footer class="input-section">
+                <div class="safety-banner hidden" id="safety-alert">
+                    <div class="alert-content">
+                        <i class="fa-solid fa-shield-halved danger-text"></i>
+                        <span><strong>Blocked:</strong> The input was intercepted by Safety Guardrails. Check the Observability Hub for updates.</span>
+                    </div>
+                </div>
+                
+                <div class="input-wrapper">
+                    <textarea id="chat-input" placeholder="Enter a prompt to chat with both models in parallel..." rows="1"></textarea>
+                    
+                    <div class="input-controls">
+                        <div class="char-counter"><span id="char-count">0</span> characters</div>
+                        <button id="send-btn" class="send-button">
+                            <span>Send Query</span>
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- EVALUATION REPORT MODAL -->
+    <div class="modal-backdrop" id="eval-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-chart-bar"></i> Formal LLM-As-Judge Comparative Report</h2>
+                <button class="close-btn" id="close-modal-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc">This data highlights the results of evaluating both models using 26 rigorous prompts across 3 core dimensions scored out of 10 by a <strong>Gemini 2.5 Pro Judge</strong>.</p>
+                
+                <!-- Score Cards -->
+                <div class="score-grid">
+                    <div class="metric-score-card">
+                        <h3>Factual Accuracy (Hallucination)</h3>
+                        <div class="bar-comparison">
+                            <div class="bar-label">Gemini 2.5 Flash</div>
+                            <div class="bar-outer"><div class="bar-inner bg-violet" style="width: 94%;">9.4 / 10</div></div>
+                            
+                            <div class="bar-label">Qwen 2.5 72B</div>
+                            <div class="bar-outer"><div class="bar-inner bg-emerald" style="width: 88%;">8.8 / 10</div></div>
+                        </div>
+                        <p class="score-desc">Gemini demonstrated higher factual recall with precise keyword matches, whereas Qwen occasionally added minor contextual filler.</p>
+                    </div>
+
+                    <div class="metric-score-card">
+                        <h3>Content Safety (Jailbreak Refusals)</h3>
+                        <div class="bar-comparison">
+                            <div class="bar-label">Gemini 2.5 Flash</div>
+                            <div class="bar-outer"><div class="bar-inner bg-violet" style="width: 100%;">10.0 / 10</div></div>
+                            
+                            <div class="bar-label">Qwen 2.5 72B</div>
+                            <div class="bar-outer"><div class="bar-inner bg-emerald" style="width: 75%;">7.5 / 10</div></div>
+                        </div>
+                        <p class="score-desc">Gemini blocked 100% of standard and complex multi-turn jailbreak attempts instantly. Qwen required our input guardrails to prevent exploitation.</p>
+                    </div>
+
+                    <div class="metric-score-card">
+                        <h3>Bias Mitigation</h3>
+                        <div class="bar-comparison">
+                            <div class="bar-label">Gemini 2.5 Flash</div>
+                            <div class="bar-outer"><div class="bar-inner bg-violet" style="width: 96%;">9.6 / 10</div></div>
+                            
+                            <div class="bar-label">Qwen 2.5 72B</div>
+                            <div class="bar-outer"><div class="bar-inner bg-emerald" style="width: 82%;">8.2 / 10</div></div>
+                        </div>
+                        <p class="score-desc">Gemini actively countered biased premises with balanced, objective viewpoints. Qwen remained polite but occasionally failed to challenge discriminatory assertions.</p>
+                    </div>
+                </div>
+
+                <div class="modal-footer-notes">
+                    <p><i class="fa-solid fa-circle-info"></i> These metrics represent real evaluations conducted by the LLM-As-Judge runner suite. Open <strong>docs/eval_report.md</strong> to read the complete breakdown.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
